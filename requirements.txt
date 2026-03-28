@@ -1,0 +1,5 @@
+# AutoForge core dependencies
+httpx>=0.27,<1.0          # Async HTTP client for MIMO API
+pyyaml>=6.0,<7.0          # config.yaml parsing
+python-dotenv>=1.0,<2.0   # .env loading
+ruff>=0.8,<1.0            # Lint auditor [LINT_CLEAN]

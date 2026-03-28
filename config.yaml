@@ -1,0 +1,27 @@
+# ============================================================
+# AutoForge - 运行配置 (Runtime Configuration)
+# ============================================================
+
+# --- 输出与路径 ---
+output_path: "./output"            # 子项目交付目录
+delivered_path: "./delivered"      # 最终交付归档目录
+
+# --- 自愈循环控制 ---
+max_retries: 5                     # 单轮自愈最大重试次数
+force_rethink_after: 3             # 连续 N 次原地修复无效后, 强制更换算法/库
+test_timeout_seconds: 120          # 单次 pytest 超时秒数
+
+# --- LLM 调用参数 ---
+llm:
+  temperature: 0.3                 # 代码生成偏保守
+  max_tokens: 8192                 # 单次响应最大 token
+  system_prompt_path: null         # 自定义系统提示词文件(可选)
+
+# --- 子项目偏好 ---
+project:
+  preferred_language: "python"     # 首选语言
+  min_complexity_score: 3          # 复杂度下限评分 (1-10)
+  venv_backend: "venv"             # 隔离方式: venv | virtualenv
+
+# --- 日志 ---
+log_level: "INFO"                  # DEBUG | INFO | WARNING | ERROR
