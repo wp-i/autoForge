@@ -7,7 +7,7 @@ output_path: "./output"            # 子项目交付目录
 delivered_path: "./delivered"      # 最终交付归档目录
 
 # --- 自愈循环控制 ---
-max_retries: 5                     # 单轮自愈最大重试次数
+max_retries: 8                     # 单轮自愈最大重试次数
 force_rethink_after: 3             # 连续 N 次原地修复无效后, 强制更换算法/库
 test_timeout_seconds: 120          # 单次 pytest 超时秒数
 
@@ -16,6 +16,9 @@ llm:
   temperature: 0.3                 # 代码生成偏保守
   max_tokens: 8192                 # 单次响应最大 token
   system_prompt_path: null         # 自定义系统提示词文件(可选)
+
+# --- Token 熔断保护 ---
+max_token_per_project: 200000     # 单项目 token 消耗上限, 超出则强制终止锻造
 
 # --- 子项目偏好 ---
 project:

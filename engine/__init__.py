@@ -1,6 +1,6 @@
 """AutoForge Engine - 全自动项目工厂核心模块."""
 
-from engine.llm_client import LLMClient
+from engine.llm_client import LLMClient, TokenBudgetExceeded
 from engine.logger import ForgeLogger
 from engine.strategist import Strategist
 from engine.architect import Architect
@@ -10,6 +10,7 @@ from engine.auditor import Auditor
 
 __all__ = [
     "LLMClient",
+    "TokenBudgetExceeded",
     "ForgeLogger",
     "Strategist",
     "Architect",

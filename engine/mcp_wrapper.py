@@ -34,7 +34,8 @@ class MCPWrapper:
         core_source = core_path.read_text(encoding="utf-8")
 
         prompt = (
-            "你是一名 MCP 协议专家。根据下面的 Python 源码, 生成一个完整的 mcp_server.py 文件。\n"
+            "你是一名 MCP 协议专家。根据下面的 Python 源码, "
+            "生成一个完整的 mcp_server.py 文件。\n"
             "要求:\n"
             "- 使用 stdio 传输 (stdin/stdout)\n"
             "- 为每个公共函数注册为 MCP Tool\n"

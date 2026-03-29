@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import httpx
@@ -40,6 +40,10 @@ class LLMConfig:
 # ------------------------------------------------------------------
 # Client
 # ------------------------------------------------------------------
+class TokenBudgetExceeded(RuntimeError):
+    """当单项目 token 消耗超过配置上限时抛出."""
+
+
 class LLMClient:
     """与小米 MIMO Chat Completions API 交互的同步/异步客户端."""
 
@@ -52,11 +56,24 @@ class LLMClient:
             "Authorization": f"Bearer {self.cfg.api_key}",
             "Content-Type": "application/json",
         }
+        # Token 消耗追踪 (熔断保护)
+        self.token_usage: int = 0
+        self.token_budget: int = 0  # 0 = 不限制
+
         logger.info(
             "LLMClient ready  model=%s  endpoint=%s",
             self.cfg.model,
             self._endpoint,
         )
+
+    def reset_token_usage(self) -> None:
+        """重置当前项目的 token 计数 (每个项目开始时调用)."""
+        self.token_usage = 0
+
+    def set_token_budget(self, budget: int) -> None:
+        """设置单项目 token 上限."""
+        self.token_budget = budget
+        logger.info("Token budget set: %d", budget)
 
     # ---------- public API ----------
 
@@ -115,13 +132,44 @@ class LLMClient:
         }
 
     def _post(self, payload: dict[str, Any]) -> dict[str, Any]:
+        # 熔断检查: 发送前预检
+        if self.token_budget > 0 and self.token_usage >= self.token_budget:
+            raise TokenBudgetExceeded(
+                f"Token 预算耗尽 ({self.token_usage}/{self.token_budget}), "
+                "强制终止当前项目锻造"
+            )
+
         logger.debug(
-            "POST %s  tokens_limit=%s", self._endpoint, payload.get("max_tokens")
+            "POST %s  tokens_limit=%s  budget_used=%d/%d",
+            self._endpoint,
+            payload.get("max_tokens"),
+            self.token_usage,
+            self.token_budget,
         )
         with httpx.Client(timeout=180) as client:
             r = client.post(self._endpoint, headers=self._headers, json=payload)
             r.raise_for_status()
-            return r.json()
+            resp = r.json()
+
+        # 累计 token 消耗
+        usage = resp.get("usage", {})
+        total = usage.get("total_tokens", 0)
+        self.token_usage += total
+        logger.debug(
+            "Token usage this call: %d, cumulative: %d", total, self.token_usage
+        )
+
+        # 熔断检查: 响应后检测
+        if self.token_budget > 0 and self.token_usage > self.token_budget:
+            logger.warning(
+                "TOKEN BUDGET EXCEEDED: %d / %d", self.token_usage, self.token_budget
+            )
+            raise TokenBudgetExceeded(
+                f"Token 预算超限 ({self.token_usage}/{self.token_budget}), "
+                "强制终止当前项目锻造"
+            )
+
+        return resp
 
     @staticmethod
     def _extract_text(resp: dict[str, Any]) -> str:
